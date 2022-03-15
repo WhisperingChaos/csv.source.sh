@@ -1,2 +1,2 @@
 # csv.source.sh
-Component to processes CSV comma separated values
+Component processes CSV comma separated values
