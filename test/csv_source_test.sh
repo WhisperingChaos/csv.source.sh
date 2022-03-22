@@ -132,10 +132,55 @@ error
 }
 
 
+test_csv_field_append(){
+  local csv
+  csv_field_append csv 'hi'
+  assert_true '[[ "$csv" == "hi" ]]'
+
+  local csv='oldtail'
+  csv_field_append csv 'newtail'
+  assert_true '[[ "$csv" == "oldtail,newtail" ]]'
+
+  local csv='oldtail'
+  csv_field_append csv 'newmiddle' 'newtail'
+  assert_true '[[ "$csv" == "oldtail,newmiddle,newtail" ]]'
+
+  local csv=''
+  csv_field_append csv 'h,i'
+  local expect='"h,i"'
+  assert_true '[[ "$csv" == "$expect" ]]'
+
+  local csv=''
+  csv_field_append csv 'h"i'
+  local expect='"h""i"'
+  assert_true '[[ "$csv" == "$expect" ]]'
+
+  local csv=''
+  csv_field_append csv 'h",i'
+  local expect='"h"",i"'
+  assert_true '[[ "$csv" == "$expect" ]]'
+
+  local csv=''
+  csv_field_append csv 'field1' 'field2' 'field3' 
+  assert_true '[[ "$csv" == "field1,field2,field3" ]]'
+
+  local csv=''
+  local expect='"fie,ld1",field2,"field""3",field4'
+  csv_field_append csv 'fie,ld1' 'field2' 'field"3' 'field4' 
+  assert_true '[[ "$csv" == "$expect" ]]'
+
+  local csv=''
+  assert_true 'csv_field_append csv' 
+  assert_true '[[ -z "$csv" ]]'
+
+  assert_false 'csv_field_append 2>/dev/null' 
+}
+
 main(){
   compose_executable "$0"
 
   test_csv_field_get
+  test_csv_field_append
 
   assert_return_code_set
 }

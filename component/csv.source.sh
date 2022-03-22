@@ -61,6 +61,11 @@ csv_field_get(){
   local row="$1"
   local -n unsetVarCnt=$2
 
+  if [[ -z "$2" ]]; then
+    msg_error "must specify a variable name to return unset variable count as second parameter"
+    return 1
+  fi
+  
   shift 2
   local -n field
   unsetVarCnt=$#
@@ -98,6 +103,56 @@ csv_field_get(){
     leftTrim="${BASH_REMATCH[1]}"
     row="${row:${#leftTrim}}"
     shift 1
+  done
+}
+###############################################################################
+##
+##  Purpose
+##    Compose CSV by concatenating one or more fields to the tail
+##    of an existing string or empty one.  A comma will be added to an
+##    existing string iff it's not already terminated by a comma.  Field
+##    values containing a double quote or comma are encapsulated in double
+##    quotes to comply with spec.
+##  In
+##    $1   - A variable name whose value contains an existing string or 
+##           empty one. 
+##    $2-N - Zero, one, or more values passed by the caller to append
+##           to the end of $1. 
+##  Out
+##    $1   - This variable's value (call by reference) will be updated
+##           to reflect the added CSV formatted fields.
+###############################################################################
+csv_field_append(){
+  local -n csvRtn=$1
+
+  if [[ -z "$1" ]]; then
+    msg_error "must supply variable name to return CSV formated string"
+    return 1
+  fi
+
+  local fieldVal
+  local -r dblQt='"'
+  local -r comma=','
+  local prefixComma=''
+  local -i csvRtnLen=${#csvRtn}
+  if [[ ${#csvRtn} -gt 0 ]] \
+  && [[ "${csvRtn:$csvRtnLen-1:1}" != "$comma" ]]; then
+    prefixComma="$comma";
+  fi
+  shift
+  while [[ $# -gt 0 ]]; do
+    if ! expr index "$1" "$comma$dblQt" >/dev/null; then
+      csvRtn+="$prefixComma$1"
+      prefixComma="$comma"
+      shift
+      continue
+    fi
+    fieldVal='"'
+    fieldVal+="${1//$dblQt/$dblQt$dblQt}"
+    fieldVal+='"'
+    csvRtn+="$prefixComma$fieldVal"
+    prefixComma="$comma"
+    shift
   done
 }
 
