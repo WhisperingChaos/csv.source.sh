@@ -1,5 +1,4 @@
-![example workflow](https://github.com/<OWNER>/<REPOSITORY>/actions/workflows/checkin.yml/badge.svg)
-
+[![Actions Status](https://github.com/whisperingchaos/csv.source.sh/workflows/test/badge.svg)](https://github.com/WhisperingChaos/csv.source.sh/actions)
 
 # csv.source.sh
 Component offers an api to parse and build a buffer of Comma Separated Values (CSV).  The CSV snytax accepted by both the parse and build APIs must adhere to [IETF RFC 4180](https://www.ietf.org/rfc/rfc4180.txt).
