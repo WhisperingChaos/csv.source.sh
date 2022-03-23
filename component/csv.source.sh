@@ -106,7 +106,7 @@ csv_field_get(){
 ###############################################################################
 ##
 ##  Purpose
-##    Compose CSV by concatenating one or more fields to the tail
+##    Build CSV by concatenating one or more fields to the tail
 ##    of an existing string or empty one.  A comma will be added to an
 ##    existing string iff it's not already terminated by a comma.  Field
 ##    values containing a double quote or comma are encapsulated in double
