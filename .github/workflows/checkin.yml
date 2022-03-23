@@ -31,3 +31,4 @@ jobs:
           cd ./test
           ./config.sh
           ./csv_source_test.sh
+          echo done
