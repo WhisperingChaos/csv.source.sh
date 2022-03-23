@@ -35,7 +35,7 @@ This component relies on [nameref/name reference feature](https://www.gnu.org/so
 ### Test
 After [installing](#install), change directory to **csv.source.sh**'s ```test```. Then run:
   * ```./config.sh``` followed by
-  * [**./csv.source_test.sh**](test/csv.source_test.sh).  It should complete successfully and not produce any messages.
+  * [**./csv_source_test.sh**](test/csv_source_test.sh).  It should complete successfully and not produce any messages.
 ```
 host:~/Desktop/projects/csv.source.sh/test$ ./csv.source_test.sh
 host:~/Desktop/projects/csv.source.sh/test$ 
