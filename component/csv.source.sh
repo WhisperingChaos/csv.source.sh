@@ -9,8 +9,6 @@
 ##  Note
 ##    Adheres to "SOLID bash" principles:
 ##    https://github.com/WhisperingChaos/SOLID_Bash#solid_bash
-##  ToDo
-##    encode "csv_field_append" function.
 ##
 ###############################################################################
 

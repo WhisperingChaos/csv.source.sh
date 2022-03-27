@@ -1,5 +1,7 @@
+[![Actions Status](https://github.com/whisperingchaos/csv.source.sh/workflows/test/badge.svg)](https://github.com/WhisperingChaos/csv.source.sh/actions)
+
 # csv.source.sh
-Component offers an api to parse and build a buffer of Comma Separated Values (CSV).  The CSV snytax accepted by both the parse and build APIs must adhere to [IETF RFC 4180](https://www.ietf.org/rfc/rfc4180.txt).
+Component offers an API to parse and build a buffer of Comma Separated Values (CSV).  The CSV snytax accepted by parse must adhere to [IETF RFC 4180](https://www.ietf.org/rfc/rfc4180.txt) while build produces one compliant to it.
 
 ## ToC
 [API Index](#api-index)  
@@ -17,10 +19,9 @@ Component offers an api to parse and build a buffer of Comma Separated Values (C
 ### API
 
 #### csv_field_append
-https://github.com/WhisperingChaos/csv.source.sh/blob/340e4678d4e502373a6b2a89795227b0ade37fe0/component/csv.source.sh#L108-L124
+https://github.com/WhisperingChaos/csv.source.sh/blob/e8b06d74c64fdee955fa2abf5aa6b5226bd2d5c9/component/csv.source.sh#L106-L122
 #### csv_field_get
-https://github.com/WhisperingChaos/csv.source.sh/blob/340e4678d4e502373a6b2a89795227b0ade37fe0/component/csv.source.sh#L17-L51
-
+https://github.com/WhisperingChaos/csv.source.sh/blob/e8b06d74c64fdee955fa2abf5aa6b5226bd2d5c9/component/csv.source.sh#L15-L49
 ### Install
 #### Simple
 Copy **csv.source.sh** into a directory then use the Bash [source](https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html#Bash-Builtins) command to include this package in a Bash testing script before executing fuctions which rely on its [API](#api-index).  Copying using:
