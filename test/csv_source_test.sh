@@ -88,12 +88,11 @@ test_csv_field_get(){
   local vendorNameRegex=''
   local dateValue=''
   local amtValue=''
-  eval local $csv_field_REMAINDER\=\'\'
-  csv_field_get '"BJS,,,",10/10,1.00' unsetValues vendorNameRegex $csv_field_REMAINDER dateValue amtValue
+  local $csv_field_REMAINDER=''
+  csv_field_get '"BJS,,,",10/10,1.00' unsetValues vendorNameRegex csv_field_REMAINDER dateValue amtValue
   assert_true '[[ $unsetValues -eq 0 ]]' 
   assert_true '[[ "$vendorNameRegex" == '"'"'BJS,,,'"'"' ]]'
-  eval local remainder=\"\$$csv_field_REMAINDER\"
-  assert_true '[[ "$remainder" == '"'"'10/10,1.00'"'"' ]]'
+  assert_true '[[ "${!csv_field_REMAINDER}" == '"'"'10/10,1.00'"'"' ]]'
   assert_true '[[ "$dateValue" == '"'"'10/10'"'"' ]]'
   assert_true '[[ "$amtValue" == '"'"'1.00'"'"' ]]'
 
@@ -101,14 +100,13 @@ test_csv_field_get(){
   local vendorNameRegex=''
   local dateValue=''
   local amtValue=''
-  eval local $csv_field_REMAINDER\=\'\'
-  csv_field_get '"BJS,,,",10/10,1.00' unsetValues vendorNameRegex dateValue amtValue $csv_field_REMAINDER 
+  local $csv_field_REMAINDER=''
+  csv_field_get '"BJS,,,",10/10,1.00' unsetValues vendorNameRegex dateValue amtValue csv_field_REMAINDER 
   assert_true '[[ $unsetValues -eq 1 ]]' 
   assert_true '[[ "$vendorNameRegex" == '"'"'BJS,,,'"'"' ]]'
   assert_true '[[ "$dateValue" == '"'"'10/10'"'"' ]]'
   assert_true '[[ "$amtValue" == '"'"'1.00'"'"' ]]'
-  eval local remainder=\"\$$csv_field_REMAINDER\"
-  assert_true '[[ -z "$remainder" ]]'
+  assert_true '[[ -z "${!csv_field_REMAINDER}" ]]'
 
   local -i unsetValues=0
   local vendorNameRegex=''
@@ -129,6 +127,57 @@ test_csv_field_get_fail_regex(){
 cat <<'error'
 msgType='Error' msg='CSV row fails to match trim regex. row='\''",'  csv_field_TRIM_REGEX='^((([^,"]+)([,]|$))|(["](([^"]|(""))*)["])([,]|$)|([,]))''
 error
+}
+
+
+test_csv_field__set_empty(){
+
+  assert_true 'csv_field__set_empty'
+
+  local field_1='NotEmpty'
+  local field_2='NotEmpty'
+  local -i field_3=1
+  assert_true 'csv_field__set_empty field_3 field_1 field_2'
+  assert_true '[[ -z $field_1 ]]'
+  assert_true '[[ -z $field_2 ]]'
+  assert_true '[[ "$field_3" == "0" ]]'
+}
+
+
+test_csv_field_get_unset_as_empty(){
+
+  assert_true 'csv_field_get_unset_as_empty'
+
+  local vendorNameRegex='NotEmpty'
+  local dateValue='NotEmpty'
+  local amtValue='NotEmpty'
+  csv_field_get_unset_as_empty '"BJS,,,",10/10,1.00' vendorNameRegex dateValue amtValue
+  assert_true '[[ $? ]]'
+  assert_true '[[ "$vendorNameRegex" == '"'"'BJS,,,'"'"' ]]'
+  assert_true '[[ "$dateValue" == '"'"'10/10'"'"' ]]'
+  assert_true '[[ "$amtValue" == '"'"'1.00'"'"' ]]'
+
+  local vendorNameRegex='NotEmpty'
+  local $csv_field_REMAINDER='NotEmpty'
+  local dateValue='NotEmpty'
+  local amtValue='NotEmpty'
+  csv_field_get_unset_as_empty '"BJS,,,",10/10' vendorNameRegex csv_field_REMAINDER dateValue amtValue
+  assert_true '[[ $? ]]'
+  assert_true '[[ "$vendorNameRegex" == '"'"'BJS,,,'"'"' ]]'
+  assert_true '[[ "${!csv_field_REMAINDER}" == '"'"'10/10'"'"' ]]'
+  assert_true '[[ "$dateValue" == '"'"'10/10'"'"' ]]'
+  assert_true '[[ -z "$amtValue" ]]'
+
+  local vendorNameRegex='NotEmpty'
+  local $csv_field_REMAINDER='NotEmpty'
+  local dateValue='NotEmpty'
+  local amtValue='NotEmpty'
+  csv_field_get_unset_as_empty '"BJS,,,"' vendorNameRegex csv_field_REMAINDER dateValue amtValue
+  assert_true '[[ $? ]]'
+  assert_true '[[ "$vendorNameRegex" == '"'"'BJS,,,'"'"' ]]'
+  assert_true '[[ -z ${!csv_field_REMAINDER} ]]'
+  assert_true '[[ -z $dateValue ]]'
+  assert_true '[[ -z $amtValue ]]'
 }
 
 
@@ -176,10 +225,13 @@ test_csv_field_append(){
   assert_false 'csv_field_append 2>/dev/null' 
 }
 
+
 main(){
   compose_executable "$0"
 
   test_csv_field_get
+  test_csv_field__set_empty
+  test_csv_field_get_unset_as_empty
   test_csv_field_append
 
   assert_return_code_set
