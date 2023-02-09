@@ -1,8 +1,8 @@
 #!/bin/bash
 ##############################################################################
 ##
-##  csv
-##
+##  Namespace
+##    csv_field
 ##  Purpose
 ##    A cohesive component providing primatives to extract or compose
 ##    CSV (Comma Separated Values) according to https://www.ietf.org/rfc/rfc4180.txt
@@ -20,7 +20,8 @@
 ##  In
 ##    $1   - A string conformant to CSV spec.  An empty string is considered
 ##           conformant.  Also, parser implements the imperfect everyday form
-##           that's less strict then the specification  For example: ",,"
+##           that's less strict then the specification  For example: two commas
+##           ",," without data preceeding or following them
 ##           are treated as three null fields.  
 ##    $2   - A variable name to return the number of unset variable names
 ##           in the list of names that follows this parameter.  A variable
@@ -31,9 +32,10 @@
 ##    $3-N - Zero, one, or more variable names passed by the caller that
 ##           receive the parsed values.  To return the rest of the string,
 ##           that would be parsed to provide a value for the next requested
-##           field, specify the variable name whose value is defined by
-##           csv_field_REMAINDER.  This feature can be helpful to detect
-##           additional unexpected data. 
+##           field, specify the variable csv_field_REMAINDER.  Use bash 
+##           indirect expansion operator ${!csv_field_REMAINDER} to obtain
+##           this variable's value that will be assigned the field's value.
+##           This feature can be helpful to detect additional unexpected data. 
 ##  Out
 ##    $2   - This return variable name is assigned the value of the number
 ##           of unset variables. 
@@ -41,11 +43,17 @@
 ##           values extracted from the CSV string as long as this string isn't
 ##           exhausted.  If a greater number of variables are specified than
 ##           can be satisfied, the remaining variables are not changed.  This
-##           behavior also applies to variable named by csv_field_REMAINDER.
+##           behavior also applies to variable referenced by csv_field_REMAINDER.
 ##           Therefore, initialize this variable with some value, like a
 ##           zero length string so a nonempty remainder can be detected.
+##           Ex: local ${csv_field_REMAINDER}=''
 ##  Return
 ##    1 - Supplied CSV string fails to conform to CSV specification.
+##  Notes:
+##    1.  Must position "if" test for reserved csv_field_REMAINDER column name
+##        before assingment to nameref "_field", as its readonly attribute will
+##        prevent a subsequent assignement of any column names that follow this
+##        reserved one.
 ###############################################################################
 ##
 # CSV fields can either be encapsulated in double quotes or directly specified.
@@ -57,51 +65,96 @@ declare -g -r csv_field_REMAINDER='_remainder'
 
 csv_field_get(){
   local row="$1"
-  local -n unsetVarCnt=$2
+  local -n _unsetVarCnt=$2
 
   if [[ -z "$2" ]]; then
-    msg_error "must specify a variable name to return unset variable count as second parameter"
+    csv_field__error "must specify a variable name to return unset variable count as second parameter"
     return 1
   fi
   
   shift 2
-  local -n field
-  unsetVarCnt=$#
+  _unsetVarCnt=$#
   local fieldWithQuotes
   local -r dblQt='"'
   while [[ -n "$row" ]] && [[ $# -gt 0 ]]; do
-
-    local -n field=$1
-
-    if [[ "$1" == "$csv_field_REMAINDER" ]]; then
-      field="$row"
-      (( unsetVarCnt-- )) 
+    # see Notes:1.
+    if [[ "$1" == "csv_field_REMAINDER" ]]; then
+      eval $csv_field_REMAINDER=\"\$row\"
+     (( _unsetVarCnt-- ))
+      # intentionally permit additional parsing after processig remainder request
+      # allows remainder request to appear in any position.  
       shift 1
       continue
     fi
 
+    local -n _field=$1
     if ! [[ $row =~ $csv_field_TRIM_REGEX ]]; then
-      msg_error "CSV row fails to match trim regex. row='$row'  csv_field_TRIM_REGEX='$csv_field_TRIM_REGEX'"
+      csv_field__error "CSV row fails to match trim regex. row='$row'  csv_field_TRIM_REGEX='$csv_field_TRIM_REGEX'"
       return 1
     fi
 
     if [[ -n "${BASH_REMATCH[3]}" ]]; then
-      field="${BASH_REMATCH[3]}"
+      _field="${BASH_REMATCH[3]}"
     elif [[ -n "${BASH_REMATCH[10]}" ]]; then
-      field=''
+      _field=''
     else
       fieldWithQuotes="${BASH_REMATCH[6]}"
       # note used dblQt instead of escaped \" because gedit doesn't 
       # properly highlight syntax that follows the statement below
       # when using \"
-      field="${fieldWithQuotes//$dblQt$dblQt/$dblQt}"
+      _field="${fieldWithQuotes//$dblQt$dblQt/$dblQt}"
     fi
 
-    (( unsetVarCnt-- )) 
+    (( _unsetVarCnt-- )) 
     leftTrim="${BASH_REMATCH[1]}"
     row="${row:${#leftTrim}}"
     shift 1
   done
+}
+###############################################################################
+##
+##  Purpose
+##    Performs same parse CSV and extract as csv_field_get, however, it places
+##    an empty string value ('') in the passed variables when the CSV row
+##    is truncated - leaving nothing to assign these variables.  Remember, an
+##    empty string assigned to a declared integer: "local -i variable" is
+##    converted into "0".
+##  In
+##    $1   - A string conformant to CSV spec.  An empty string is considered
+##           conformant.  Also, parser implements the imperfect everyday form
+##           that's less strict then the specification  For example: two commas
+##           ",," without data preceeding or following them
+##           are treated as three null fields.  
+##    $2-N - Zero, one, or more variable names passed by the caller that
+##           receive the parsed values.  To return the rest of the string,
+##           that would be parsed to provide a value for the next requested
+##           field, specify the variable csv_field_REMAINDER.  Use bash 
+##           indirect expansion operator ${!csv_field_REMAINDER} to obtain
+##           the field's value.  his feature can be helpful to detect
+##           additional unexpected data. 
+##  Out
+##    $2-N - The variable names defined by this list will be updated with
+##           values extracted from the CSV string.  When a greater number
+##           of variable names are specified than can be satisfied by the
+##           CSV string, the remaining variables are are set to ''.
+##  Return
+##    1 - Supplied CSV string fails to conform to CSV specification.
+###############################################################################
+csv_field_get_unset_as_empty(){
+
+  local -i unsetVarCnt=0
+  if ! csv_field_get "$1" unsetVarCnt "${@:2}"; then
+    return 1
+  fi
+
+  if [[ $unsetVarCnt -lt 1 ]]; then
+    return 0
+  fi
+
+  local -r -i argPosNullifyStart=${#@}-$unsetVarCnt+1
+  if ! csv_field__set_empty "${@:$argPosNullifyStart}"; then
+    return 1
+  fi
 }
 ###############################################################################
 ##
@@ -124,7 +177,7 @@ csv_field_append(){
   local -n csvRtn=$1
 
   if [[ -z "$1" ]]; then
-    msg_error "must supply variable name to return CSV formated string"
+    csv_field__error "must supply variable name to return CSV formated string"
     return 1
   fi
 
@@ -153,7 +206,37 @@ csv_field_append(){
     shift
   done
 }
+############################ private ###########################
 
-msg_error(){
+###############################################################################
+##
+##  Purpose
+##    Set passed arguments to empty string ('') or (0) if declared an integer.
+##  In
+##    $1-N - Zero to many variable names.
+##  Out
+##    $1-N - Zero to many variable names set to empty string ('')
+###############################################################################
+csv_field__set_empty(){
+  while [[ $# -gt 0 ]]; do
+    if [[ "$1" == "csv_field_REMAINDER" ]]; then
+      eval ${csv_field_REMAINDER}=''
+    else
+      local -n _field=$1
+      _field=''
+    fi
+    shift 1
+  done
+}
+###############################################################################
+##
+##  Purpose
+##    Provide a default, simple error function that can be overridden.
+##  In
+##    $1 - error message text.
+##  Out
+##    ERROUT - streamed error message text
+###############################################################################
+csv_field__error(){
   echo "Error: $1" >&2
 }
