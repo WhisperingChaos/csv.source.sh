@@ -16,12 +16,16 @@ Component offers an API to parse and build a buffer of Comma Separated Values (C
 
 [csv_field_get](#csv_field_get)
 
+[csv_field_get_unset_as_empty](#csv_field_get_unset_as_empty)
+
 ### API
 
 #### csv_field_append
-https://github.com/WhisperingChaos/csv.source.sh/blob/e8b06d74c64fdee955fa2abf5aa6b5226bd2d5c9/component/csv.source.sh#L106-L122
+https://github.com/WhisperingChaos/csv.source.sh/blob/fa4fcb22fabdcb8d565fa36a9bfce7bf489dc57c/component/csv.source.sh#L159-L175
 #### csv_field_get
-https://github.com/WhisperingChaos/csv.source.sh/blob/e8b06d74c64fdee955fa2abf5aa6b5226bd2d5c9/component/csv.source.sh#L15-L49
+https://github.com/WhisperingChaos/csv.source.sh/blob/fa4fcb22fabdcb8d565fa36a9bfce7bf489dc57c/component/csv.source.sh#L15-L51
+#### csv_field_get_unset_as_empty
+https://github.com/WhisperingChaos/csv.source.sh/blob/fa4fcb22fabdcb8d565fa36a9bfce7bf489dc57c/component/csv.source.sh#L114-L142
 ### Install
 #### Simple
 Copy **csv.source.sh** into a directory then use the Bash [source](https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html#Bash-Builtins) command to include this package in a Bash script before executing fuctions which rely on its [API](#api-index).  Copying using:
